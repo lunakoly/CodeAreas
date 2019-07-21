@@ -1,0 +1,16 @@
+.keyword {
+	color: rgb(204, 120, 50);
+	font-weight: bold;
+}
+
+.function-call {
+	color: rgb(22, 125, 255);
+}
+
+.number {
+	color: #c1a111;
+}
+
+.quoted {
+	color: #0ab000;
+}

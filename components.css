@@ -1,0 +1,68 @@
+.centered {
+	margin: 0 auto;
+}
+
+.middled {
+	text-align: center;
+}
+
+.right-most {
+	text-align: right;
+}
+
+.bar {
+	display: flex;
+	justify-content: space-evenly;
+}
+
+.horizontal {
+	flex-direction: row;
+}
+
+.vertical {
+	flex-direction: column;
+}
+
+.expandable {
+	display: grid;
+	overflow: auto;
+}
+
+.expander {
+	display: inline-block;
+	position: relative;
+}
+
+.transparent {
+	background-color: transparent;
+	color: transparent;
+
+	caret-color: black;
+
+	box-shadow: none;
+	outline: none;
+}
+
+.detached {
+	position: absolute;
+	left: 0;
+	top: 0;
+}
+
+.unscrollable {
+	overflow: hidden;
+}
+
+.filler {
+	min-width: 100%;
+	min-height: 100%;
+	border: none;
+	resize: none;
+}
+
+.text-preserving {
+	white-space: pre;
+
+	-webkit-text-size-adjust: none;
+			text-size-adjust: none;
+}

@@ -1,0 +1,48 @@
+<html>
+	<head>
+		<title>Code Editor Templates</title>
+
+		<meta charset="utf-8">
+		<meta name="viewport" content="width=device-width">
+
+		<link rel="stylesheet" href="components.css">
+		<link rel="stylesheet" href="colors.css">
+		<link rel="stylesheet" href="common.css">
+
+		<script src="main.js" type="module"></script>
+	</head>
+
+	<body>
+		<!-- Just a textarea on top of a div -->
+		<div class="accurate expandable window">
+			<div class="expander">
+				<textarea
+					class="detached unscrollable transparent filler area"
+					id="first"
+					wrap="off"
+					spellcheck="false"
+					autocomplete="off"></textarea>
+				<div
+					class="text-preserving area"
+					data-observe="#first"></div>
+			</div>
+		</div>
+
+		<!-- Same as previous + regex-based highlighting -->
+		<div class="accurate expandable window">
+			<div class="expander">
+				<textarea
+					class="detached unscrollable transparent filler area"
+					id="second"
+					wrap="off"
+					spellcheck="false"
+					autocomplete="off"></textarea>
+				<div
+					class="text-preserving area"
+					id="regexOutput"
+					data-observe="#second"
+					data-handler="regex"></div>
+			</div>
+		</div>
+	</body>
+</html>
