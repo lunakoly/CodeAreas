@@ -23,12 +23,12 @@
 	flex-direction: column;
 }
 
-.expandable {
+.viewport {
 	display: grid;
 	overflow: auto;
 }
 
-.expander {
+.expandable {
 	display: inline-block;
 	position: relative;
 }

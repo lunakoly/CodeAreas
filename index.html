@@ -14,8 +14,8 @@
 
 	<body>
 		<!-- Just a textarea on top of a div -->
-		<div class="accurate expandable window">
-			<div class="expander">
+		<div class="accurate viewport window">
+			<div class="expandable">
 				<textarea
 					class="detached unscrollable transparent filler area"
 					id="first"
@@ -24,13 +24,15 @@
 					autocomplete="off"></textarea>
 				<div
 					class="text-preserving area"
-					data-observe="#first"></div>
+					id="regexOutput"
+					data-observe="#first"
+					data-highlighter="regex"></div>
 			</div>
 		</div>
 
 		<!-- Same as previous + regex-based highlighting -->
-		<div class="accurate expandable window">
-			<div class="expander">
+		<div class="accurate viewport window">
+			<div class="expandable">
 				<textarea
 					class="detached unscrollable transparent filler area"
 					id="second"
@@ -39,9 +41,9 @@
 					autocomplete="off"></textarea>
 				<div
 					class="text-preserving area"
-					id="regexOutput"
+					id="scopedOutput"
 					data-observe="#second"
-					data-handler="regex"></div>
+					data-highlighter="scoped"></div>
 			</div>
 		</div>
 	</body>

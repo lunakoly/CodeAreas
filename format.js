@@ -39,3 +39,11 @@ export function divide(string) {
 export function wrap(text, styleClass) {
 	return `<span class="${styleClass}">${text}</span>`
 }
+
+/**
+ * Replaces a part of string specified
+ * by the indices
+ */
+export function insert(string, substring, start, length) {
+	return string.substring(0, start) + substring + string.substring(start + length)
+}

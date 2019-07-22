@@ -1,117 +1,68 @@
-import * as format from './format.js'
+import * as relations from './relations.js'
+
+relations.assignAllObservables()
 
 
-/**
- * Handler that does nothing
- */
-class EmptyHandler {
-	constructor() {
+// initialize regex highlighter of
+// the first code area
+regexOutput.highlighter
+	.defineRule(/"[^"]*"/g, 'quoted')
+	.defineRule(/'[^']'/g,	'quoted')
+	.defineRule(/\b(var|val|if|else|while|for|when|fun|return|operator)\b/g, 'keyword')
+	.defineRule(/[-+]?[0-9]*\.?[0-9]+(?:(?:e|E)[-+]?[0-9]+)?/g, 			 'number')
+	.defineRule(/\b[a-zA-Z_][a-zA-Z0-9_]*(?=\()/g, 'function-call')
+	.defineRule(/\b(Double|Float|Long|Int|Short|Byte|Boolean|Char|String)\b/g, 'primitive')
 
+
+const singleQuoteScope = new relations.Scope('quoted', {
+	'\'': {
+		'pop': true
+	},
+
+	'\\\\.': {
+		'styleClass': 'keyword'
 	}
+})
 
-	/**
-	 * Highlights the text
-	 */
-	highlight(text) {
-		return text
+const doubleQuoteScope = new relations.Scope('quoted', {
+	'\"': {
+		'pop': true
+	},
+
+	'\\\\.': {
+		'styleClass': 'keyword'
 	}
-}
+})
 
+const globalScope = new relations.Scope('', {
+	'\'': {
+		'styleClass': 'quoted',
+		'push': singleQuoteScope
+	},
 
-/**
- * Handler that may contain regex rules
- * for code highlighting
- */
-class RegexHandler extends EmptyHandler {
-	constructor() {
-		super()
+	'\"': {
+		'styleClass': 'quoted',
+		'push': doubleQuoteScope
+	},
 
-		/**
-		 * (Regex, Style Class) rule pairs
-		 */
-		this.rules = []
+	'\\b(var|val|if|else|while|for|when|fun|return|operator)\\b': {
+		'styleClass': 'keyword'
+	},
+
+	'[-+]?[0-9]*\\.?[0-9]+(?:(?:e|E)[-+]?[0-9]+)?': {
+		'styleClass': 'number'
+	},
+
+	'\\b[a-zA-Z_][a-zA-Z0-9_]*(?=\\()': {
+		'styleClass': 'function-call'
+	},
+
+	'\\b(Double|Float|Long|Int|Short|Byte|Boolean|Char|String)\\b': {
+		'styleClass': 'primitive'
 	}
+})
 
-	/**
-	 * Adds a rule for highlighting
-	 */
-	defineRule(regex, styleClass) {
-		this.rules.push({ regex: regex, styleClass: styleClass })
-		return this
-	}
-
-	/**
-	 * Highlights the text
-	 */
-	highlight(text) {
-		for (let each of this.rules)
-			text = text.replace(each.regex, it => format.wrap(it, each.styleClass))
-		return text
-	}
-}
-
-
-/**
- * TODO: finish it
- *
- * Handler that does highlighting
- * by contextual rules
- */
-class ScopedHandler extends EmptyHandler {
-	constructor() {
-		super()
-	}
-
-	/**
-	 * Highlights the text
-	 */
-	highlight(text) {
-		return text
-	}
-}
-
-
-/**
- * Register observations
- */
-function assignObservables() {
-	const observers = document.querySelectorAll('[data-observe]')
-
-	for (let each of observers) {
-		const handler = each.dataset.handler
-
-		if (handler == 'regex')
-			each.handler = new RegexHandler()
-		else
-			each.handler = new EmptyHandler()
-
-		const observable = document.querySelector(each.dataset.observe)
-
-		if (observable) {
-			observable.addEventListener('input', e => {
-				const escaped = format.escape(observable.value)
-				const value = each.handler.highlight(escaped)
-				each.innerHTML = format.divide(value)
-			})
-		}
-	}
-}
-
-
-// main
-assignObservables()
-
-const Kotlin = {
-	DOUBLE_QUOTED: /"[^"]*"/g,
-	SINGLE_QUOTED: /'[^']'/g,
-	KEYWORDS: /\b(var|val|if|else|while|for|when|fun|return|operator)\b/g,
-	NUMBERS: /[-+]?[0-9]*\.?[0-9]+(?:(?:e|E)[-+]?[0-9]+)?/g,
-	FUNCTION_CALL: /\b[a-zA-Z_][a-zA-Z0-9_]*(?=\()/g,
-}
-
-regexOutput.handler
-	.defineRule(Kotlin.DOUBLE_QUOTED, 	'quoted')
-	.defineRule(Kotlin.SINGLE_QUOTED, 	'quoted')
-	.defineRule(Kotlin.KEYWORDS, 		'keyword')
-	.defineRule(Kotlin.NUMBERS, 		'number')
-	.defineRule(Kotlin.FUNCTION_CALL, 	'function-call')
+// initialize regex highlighter of
+// the second code area
+scopedOutput.highlighter
+	.pushScope(globalScope)
