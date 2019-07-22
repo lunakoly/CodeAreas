@@ -6,9 +6,9 @@ relations.assignAllObservables()
 // initialize regex highlighter of
 // the first code area
 regexOutput.highlighter
-	.defineRule(/"[^"]*"/g, 'quoted')
-	.defineRule(/'[^']'/g,	'quoted')
-	.defineRule(/\b(var|val|if|else|while|for|when|fun|return|operator)\b/g, 'keyword')
+	.defineRule(/"(?:\\.|[^"])*"/g, 'quoted')
+	.defineRule(/'(?:\\.|[^'])'/g,	'quoted')
+	.defineRule(/\b(var|val|const|if|else|while|for|when|fun|return|operator)\b/g, 'keyword')
 	.defineRule(/[-+]?[0-9]*\.?[0-9]+(?:(?:e|E)[-+]?[0-9]+)?/g, 			 'number')
 	.defineRule(/\b[a-zA-Z_][a-zA-Z0-9_]*(?=\()/g, 'function-call')
 	.defineRule(/\b(Double|Float|Long|Int|Short|Byte|Boolean|Char|String)\b/g, 'primitive')
@@ -45,7 +45,7 @@ const globalScope = new relations.Scope('', {
 		'push': doubleQuoteScope
 	},
 
-	'\\b(var|val|if|else|while|for|when|fun|return|operator)\\b': {
+	'\\b(var|val|const|if|else|while|for|when|fun|return|operator)\\b': {
 		'styleClass': 'keyword'
 	},
 

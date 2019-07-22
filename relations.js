@@ -61,14 +61,16 @@ export class Scope {
 	}
 
 	/**
-	 * Wraps a portion of text with it's
-	 * styleClass
+	 * Wraps a portion of text with a
+	 * styleClass. Inserts that portion into
+	 * the text and returns it as a result with
+	 * the position pointing after the insertion
 	 */
-	finalize(text, start, end) {
+	wrap(text, styleClass, start, end) {
 		const read = text.substring(start, end)
-		const wrapped = format.wrap(read, this.styleClass)
+		const wrapped = format.wrap(read, styleClass)
 		const result = format.insert(text, wrapped, start, end - start)
-		return [result, end - read.length + wrapped.length]
+		return [result, start + wrapped.length]
 	}
 
 	/**
@@ -99,17 +101,15 @@ export class Scope {
 				const match = this.lookAhead(each, text, it)
 
 				if (match != null) {
-					let styled = match
-
-					if (item.styleClass)
-						styled = format.wrap(match, item.styleClass)
-
-					text = format.insert(text, styled, it, match.length)
-					it += styled.length
 					found = true
 
+					if (item.styleClass)
+						[text, it] = this.wrap(text, item.styleClass, it, it + match.length)
+					else
+						it += match.length
+
 					if (item.pop)
-						return this.finalize(text, index, it)
+						return this.wrap(text, this.styleClass, index, it)
 
 					if (item.push)
 						[text, it] = item.push.proceed(text, it)
@@ -122,13 +122,11 @@ export class Scope {
 				it++
 		}
 
-		return this.finalize(text, index, it)
+		return this.wrap(text, this.styleClass, index, it)
 	}
 }
 
 /**
- * TODO: finish it
- *
  * Handler that does highlighting
  * by contextual rules
  */
