@@ -52,78 +52,38 @@ export class RegexHighlighter extends EmptyHighlighter {
 
 
 /**
- * Defines a parsing context
+ * Wraps a portion of text with a
+ * styleClass. Inserts that portion into
+ * the text and returns it as a result with
+ * the position pointing after the insertion
  */
-export class Scope {
-	constructor(styleClass, transitions = {}) {
-		this.transitions = transitions
-		this.styleClass = styleClass
-	}
+function wrap(text, styleClass, start, end) {
+	const read = text.substring(start, end)
+	const wrapped = format.wrap(read, styleClass)
+	const result = format.insert(text, wrapped, start, end - start)
+	return [result, start + wrapped.length]
+}
 
-	/**
-	 * Wraps a portion of text with a
-	 * styleClass. Inserts that portion into
-	 * the text and returns it as a result with
-	 * the position pointing after the insertion
-	 */
-	wrap(text, styleClass, start, end) {
-		const read = text.substring(start, end)
-		const wrapped = format.wrap(read, styleClass)
-		const result = format.insert(text, wrapped, start, end - start)
-		return [result, start + wrapped.length]
-	}
+/**
+ * Tests if the next part of text
+ * satisfies the pattern
+ */
+function lookAhead(pattern, text, start) {
+	const regex = new RegExp(pattern, 'g')
 
-	/**
-	 * Tests if the next part of text
-	 * satisfies the pattern
-	 */
-	lookAhead(pattern, text, start) {
-		const regex = new RegExp(pattern, 'g')
-		const matches = regex.exec(text.substring(start))
+	if (start == 0) {
+		const matches = regex.exec(text)
 
 		if (matches != null && matches.index == 0)
 			return matches[0]
+	} else {
+		const matches = regex.exec(text.substring(start - 1))
 
-		return null
+		if (matches != null && matches.index == 1)
+			return matches[0]
 	}
 
-	/**
-	 * Highlights the next part of text
-	 */
-	proceed(text, index) {
-		let it = index;
-
-		while (it < text.length) {
-			let found = false
-
-			for (let each of Object.keys(this.transitions)) {
-				const item = this.transitions[each]
-				const match = this.lookAhead(each, text, it)
-
-				if (match != null) {
-					found = true
-
-					if (item.styleClass)
-						[text, it] = this.wrap(text, item.styleClass, it, it + match.length)
-					else
-						it += match.length
-
-					if (item.pop)
-						return this.wrap(text, this.styleClass, index, it)
-
-					if (item.push)
-						[text, it] = item.push.proceed(text, it)
-
-					break
-				}
-			}
-
-			if (!found)
-				it++
-		}
-
-		return this.wrap(text, this.styleClass, index, it)
-	}
+	return null
 }
 
 /**
@@ -135,38 +95,143 @@ export class ScopedHighlighter extends EmptyHighlighter {
 		super()
 
 		/**
-		 * Stack of contexts
+		 * Holds all contexts
 		 */
-		this.scopes = []
+		this.syntax = {}
 	}
 
 	/**
-	 * Adds a scope
+	 * Sets the current grammar rules
 	 */
-	pushScope(scope) {
-		this.scopes.push(scope)
+	setSyntax(syntax) {
+		this.syntax = syntax
 	}
 
 	/**
-	 * Returns the last added scope
+	 * Highlights the next part of text
 	 */
-	getLastScope() {
-		return this.scopes[this.scopes.length - 1]
+	applyScope(scope, text, index) {
+		let it = index;
+
+		while (it < text.length) {
+			let found = false
+
+			for (let each of Object.keys(scope.patterns)) {
+				const item = scope.patterns[each]
+				const match = lookAhead(each, text, it)
+
+				if (match != null) {
+					found = true
+
+					if (item.style_class)
+						[text, it] = wrap(text, item.style_class, it, it + match.length)
+					else
+						it += match.length
+
+					if (item.pop)
+						return wrap(text, scope.style_class, index, it)
+
+					if (item.push)
+						[text, it] = this.applyScope(this.syntax[item.push], text, it)
+
+					break
+				}
+			}
+
+			if (!found)
+				it++
+		}
+
+		return wrap(text, scope.style_class, index, it)
 	}
 
 	/**
 	 * Highlights the text
 	 */
 	highlight(text) {
-		const top = this.getLastScope()
+		const top = this.syntax.global
 
 		if (top) {
-			const [result, index] = top.proceed(text, 0)
+			const [result, index] = this.applyScope(top, text, 0)
 			return result
 		}
 
 		return text
 	}
+}
+
+
+/**
+ * Escapes html entities in observable.value
+ * performs highlighting, reformats lines
+ * and return the result
+ */
+export function analyze(observable, observer) {
+	const escaped = format.escape(observable.value)
+	const value = observer.highlighter.highlight(escaped)
+	return value
+}
+
+/**
+ * Assigns a new value to the observer value
+ */
+export function assign(observable, observer, value) {
+	const start = observable.selectionStart
+	const end   = observable.selectionEnd
+
+	observable.value = value
+
+	observable.selectionStart = start
+	observable.selectionEnd   = end
+
+	observer.innerHTML = analyze(observable, observer)
+}
+
+/**
+ * Inserts a sequence at the selection position
+ */
+export function inject(observable, observer, sequence) {
+	assign(
+		observable,
+		observer,
+		observable.value.substring(0, observable.selectionStart) +
+		sequence +
+		observable.value.substring(observable.selectionEnd)
+	)
+
+	observable.selectionStart += sequence.length
+	observable.selectionEnd = observable.selectionStart
+}
+
+/**
+ * Removes a portion described by changes.selectionStart
+ * and changes.selectionEnd and inserts changes.sequence there
+ */
+export function insert(observable, observer, changes) {
+	let start = observable.selectionStart
+	let end   = observable.selectionEnd
+
+	observable.value = observable.value.substring(0, changes.selectionStart) +
+		   			   changes.sequence +
+		   			   observable.value.substring(changes.selectionEnd)
+
+	if (end > changes.selectionStart) {
+		const min = Math.min(end, changes.selectionEnd)
+		end += changes.sequence.length - (min - changes.selectionStart)
+	}
+
+	if (start >= changes.selectionStart) {
+		const min = Math.min(start, changes.selectionEnd)
+		start += changes.sequence.length - (min - changes.selectionStart)
+	}
+
+	if (start > end)
+		end = start
+
+	observable.selectionStart = start
+	observable.selectionEnd   = end
+
+	observer.innerHTML = analyze(observable, observer)
 }
 
 
@@ -188,10 +253,11 @@ export function assignObservable(element) {
 
 	if (observable) {
 		observable.addEventListener('input', e => {
-			const escaped = format.escape(observable.value)
-			const value = element.highlighter.highlight(escaped)
-			element.innerHTML = format.divide(value)
+			element.innerHTML = analyze(observable, element)
 		})
+
+		// initial
+		element.innerHTML = analyze(observable, element)
 	}
 }
 
@@ -206,3 +272,7 @@ export function assignAllObservables() {
 		assignObservable(each)
 	}
 }
+
+
+// analyze existing elements
+assignAllObservables()
